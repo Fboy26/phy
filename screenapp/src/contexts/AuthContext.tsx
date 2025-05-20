@@ -23,27 +23,17 @@ interface ApiErrorResponse {
   error?: string;
 }
 
-type AuthContextType = {
-  user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<boolean>;
-  updateUserProfile: (firstName: string, lastName: string) => Promise<void>;
+// Determine API base URL based on platform
+const getApiBaseUrl = () => {
+  // For web development, use localhost
+  if (Platform.OS === 'web') {
+    return 'http://localhost:8080/api/auth';
+  }
+  // For mobile (iOS/Android), use a mock URL (replace with your deployed backend later)
+  return 'https://mock-backend.com/api/auth';
 };
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  isLoading: true,
-  isAuthenticated: false,
-  signIn: async () => {},
-  signUp: async () => {},
-  signOut: async () => false,
-  updateUserProfile: async () => {},
-});
-
-const API_BASE_URL = 'http://localhost:8080/api/auth';
+const API_BASE_URL = getApiBaseUrl();
 
 // ------------------------
 // Utility Functions
@@ -83,6 +73,26 @@ const clearUserStorage = async () => {
 // AuthProvider Component
 // ------------------------
 
+type AuthContextType = {
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<boolean>;
+  updateUserProfile: (firstName: string, lastName: string) => Promise<void>;
+};
+
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  isLoading: true,
+  isAuthenticated: false,
+  signIn: async () => {},
+  signUp: async () => {},
+  signOut: async () => false,
+  updateUserProfile: async () => {},
+});
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -104,8 +114,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = useCallback(async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      const response = await axios.post(`${API_BASE_URL}/signin`, { email, password });
-      const userData: User = response.data;
+      console.log('Handle sign-in triggered with email:', email);
+      let userData: User;
+
+      // Mock response for mobile (iOS/Android) to bypass network error
+      if (Platform.OS !== 'web') {
+        userData = { id: '1', email, token: 'mock-token' };
+        console.log('Using mock sign-in data:', userData);
+      } else {
+        const response = await axios.post(`${API_BASE_URL}/signin`, { email, password });
+        userData = response.data;
+      }
 
       setUser(userData);
       await saveUserToStorage(userData);
@@ -122,8 +141,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = useCallback(async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      const response = await axios.post(`${API_BASE_URL}/signup`, { email, password });
-      const userData: User = response.data;
+      console.log('Sign-up triggered with email:', email);
+      let userData: User;
+
+      // Mock response for mobile (iOS/Android) to bypass network error
+      if (Platform.OS !== 'web') {
+        userData = { id: '1', email, token: 'mock-token' };
+        console.log('Using mock sign-up data:', userData);
+      } else {
+        const response = await axios.post(`${API_BASE_URL}/signup`, { email, password });
+        userData = response.data;
+      }
 
       setUser(userData);
       await saveUserToStorage(userData);
